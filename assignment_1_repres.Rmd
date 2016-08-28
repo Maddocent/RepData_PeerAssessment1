@@ -27,11 +27,13 @@ knitr::opts_knit$set(root.dir = ROOT)
 ## install.packages("readr")
 ## install.packages("ggplot2")
 ## install.packages("pander")
+## install.packages("lubridate")
 
 library(dplyr)
 library(readr)
 library(ggplot2)
 library(pander)
+library(lubridate)
 
 ```
 
@@ -46,14 +48,10 @@ unzip(zipfile = data_file, exdir = "./data" )
 
 ### Reading the datafile
 For reading, cleaning and subsetting the data I use the 'Hadley' verse packages: {readr}, {dplyr}.
+The {lubridate} package handles time-formats in data
 ```{r, reading_data}
 activity <- read_csv(file = "./data/activity.csv")
 ``` 
-
-### Removing NAs
-```{r, na_omit}
-activity <- na.omit(activity)
-```
 
 ### Inspecting the activity dataframe
 ```{r, inspect_data}
@@ -62,40 +60,44 @@ glimpse(activity)
 str(activity)
 ```
 
-
-## What is mean total number of steps taken per day?
-
-### Subsetting and summarize data
-Converting $date to character, than to factor
-```{r}
-activity$date <- as.character(activity$date) 
-activity$date <- as.factor(activity$date)
+## changing $date type to date with lubridate
+``` {r}
+activity$date <- ymd(activity$date)
 str(activity)
-```
-
-Checking the levels of $date.
-```{r}
-levels(activity$date)
 ``` 
 
+### Removing NAs
+```{r, na_omit}
+activity_na_omit <- na.omit(activity)
+str(activity_na_omit)
+```
+
+## What is mean total number of steps taken per day?
+For this part of the assignment the missing values can be ignored.
+
+ 1) Calculate the total number of steps taken per day.
+ 
+ 2) Make a histogram of the total number of steps taken each day.
+ 
+ 3) Calculate and report the mean and median of the total number of steps taken per day.
+
+### Ad 1. Total number of steps taken per day
+Converting $date to character, than to factor
 Subsetting and calculating steps per day, using the pipe (%>%) operator. 
 ```{r}
 library(dplyr)
-activity$steps <- as.numeric(activity$steps)
-tot_steps_pd <- activity %>%
+tot_steps_pd <- activity_na_omit %>%
             group_by(date) %>% 
             summarise(total_steps = sum(steps))
+
+head(tot_steps_pd, 10)    
 ```
 
-### Plotting total steps per day
+### Ad 2. Plotting total steps per day
 ```{r, fig.height=4, fig.width=12}
 library(ggplot2)
 # function to save ggplot2 plots
 # this function takes the argument imageDirectory and filename as arguments
-
-str(tot_steps_pd)
-tot_steps_pd$date <- as.factor(tot_steps_pd$date)
-names(tot_steps_pd)
 
 # creating image directory
 dir.create(paste0(ROOT, "/images"))
@@ -107,13 +109,13 @@ saveInImageDirectory<-function(imageDirectory,filename){
 }
 
 # plotting total steps per day
-p <- ggplot(data = tot_steps_pd, aes(date, total_steps))
-graph <- p + geom_point() +
+p <- ggplot(data = tot_steps_pd, aes(x = total_steps))
+graph <- p + geom_histogram(binwidth = 1000) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-      theme(axis.text.x = element_text(size=11, angle=90)) +
+      theme(axis.text.x = element_text(size=11)) +
             labs(title = "Total steps per day") +
-                  xlab("Date") + 
-                  ylab("Total Steps per Day")
+                  xlab("Steps per Day") + 
+                  ylab("Frequency")
 
 graph
 ``` 
@@ -145,6 +147,49 @@ pander(cbind(overall_mean, overall_median))
 
 
 ## What is the average daily activity pattern?
+
+ 1) Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```{r}
+library(dplyr)
+## install.packages("astsa")  # install it ... I'm using version 1.5 below
+library(astsa)             # then load it (has to be done at the start of each session)
+install.packages("stats")
+
+
+timeSeries <- ts(data = activity, start = c(2012,10,2), 
+                 end = c(2012,11,29), frequency = ((24*60)/5))
+
+timeSeries
+
+
+ts(data = NA, start = 1, end = numeric(), frequency = 1,
+   deltat = 1, ts.eps = getOption("ts.eps"), class = , names = )
+as.ts(x, ...)
+is.ts(x)
+
+str(activity)
+activity$steps <- as.numeric(activity$steps)
+
+
+
+
+
+time_series <- 
+```
+
+
+
+
+
+
+
+
+
+
+
+ 2) Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
 
 
 
